@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-import re
+from fnmatch import fnmatch
 import time
 import types
 
@@ -24,8 +24,8 @@ class Watcher:
     _directory = os.getcwd()  # The root directory to watch.
     _recursive = False
     _polling_interval = 1000  # The time between polls, in milliseconds.
-    _file_pattern = r".+"  # The file pattern to match entries that are files.
-    _directory_pattern = r".+"  # The directory pattern to match entries that are directories.
+    _file_pattern = "*"  # The file pattern to match entries that are files.
+    _directory_pattern = "*"  # The directory pattern to match entries that are directories.
     _cache = False  # If True, we create a '.grigori' file which stores the files on shutdown.
 
     _callback_added = None
@@ -150,10 +150,10 @@ class Watcher:
                 if self._is_temporary_file(entry.path):  # Filter out IDE temporary files.
                     continue
                 if entry.is_dir():
-                    if self._recursive and re.match(self._directory_pattern, entry.name):
+                    if self._recursive and fnmatch(entry.name, self._directory_pattern):
                         self._walk(entry.path, changes, files)
                 else:
-                    if re.match(self._file_pattern, entry.name):
+                    if fnmatch(entry.name, self._file_pattern):
                         files[entry.path] = entry.stat().st_mtime  # Save in new list, so we can compare for deleted.
                         if entry.path in self._files:  # The file is already saved, so we modified it.
                             if entry.stat().st_mtime > self._files[entry.path]:
